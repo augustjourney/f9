@@ -1,7 +1,7 @@
 {
 	"name": "@augustjourney/f9",
 	"version": "1.0.0",
-	"description": "Tiny fetch-wrapper",
+	"description": "Simple fetch wrapper",
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/augustjourney/f9.git"
@@ -21,7 +21,8 @@
 		"dist"
 	],
 	"scripts": {
-		"build": "unbuild"
+		"build": "unbuild",
+		"release": "npm publish --access public"
 	},
 	"keywords": [],
 	"author": "augustjourney",
