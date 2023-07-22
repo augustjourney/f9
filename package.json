@@ -1,8 +1,11 @@
 {
-	"name": "f9",
+	"name": "@augustjourney/f9",
 	"version": "1.0.0",
 	"description": "Tiny fetch-wrapper",
-	"repository": "augustjourney/f9",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/augustjourney/f9.git"
+	},
 	"main": "./dist/index.cjs",
 	"module": "./dist/index.mjs",
 	"types": "./dist/index.d.ts",
@@ -21,12 +24,17 @@
 		"build": "unbuild"
 	},
 	"keywords": [],
-	"author": "",
+	"author": "augustjourney",
 	"license": "MIT",
 	"devDependencies": {
 		"@types/node": "^20.4.3",
 		"prettier": "^3.0.0",
 		"typescript": "^5.1.6",
 		"unbuild": "^1.2.1"
-	}
+	},
+	"bugs": {
+		"url": "https://github.com/augustjourney/f9/issues"
+	},
+	"homepage": "https://github.com/augustjourney/f9#readme",
+	"dependencies": {}
 }
