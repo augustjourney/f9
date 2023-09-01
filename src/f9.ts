@@ -88,8 +88,8 @@ export class F9 {
 	 * @param headers
 	 * @returns Headers
 	 */
-	#buildHeaders(headers: Headers = {}): void {
-		this.#headers = {
+	#buildHeaders(headers: Headers = {}): Headers {
+		return {
 			...this.#headers,
 			...headers,
 		}
@@ -202,15 +202,15 @@ export class F9 {
 
 		this.#method = $method
 
-		this.#buildHeaders(params.headers)
+		const headers = this.#buildHeaders(params.headers)
 
-		const responseType = this.#buildResponseType(this.#headers['Content-Type'], params.options?.responseType)
+		const responseType = this.#buildResponseType(headers['Content-Type'], params.options?.responseType)
 
 		const body = this.#buildBody(params, responseType)
 
 		const opts: FetchOptions = {
 			method: $method,
-			headers: this.#headers,
+			headers,
 			mode: params.options?.mode,
 		}
 
