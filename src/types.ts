@@ -4,7 +4,7 @@ export type Auth = BearerAuth | BasicAuth
 
 export interface BearerAuth {
 	type: 'Bearer'
-	token: string
+	token?: string
 	header?: string
 	key?: string
 }
