@@ -273,6 +273,10 @@ export class F9 {
 		}
 	}
 
+	setHeaders(headers:Headers = {}) {
+		this.#headers = this.#buildHeaders(headers)
+	}
+
 	setAuthorization(value: string) {
 		this.#headers.Authorization = value
 	}
