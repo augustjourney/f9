@@ -149,7 +149,10 @@ export class F9 {
 	async #buildResponse<T>(response: Response): Promise<F9Response<T> | F9Error<T>> {
 		if (!response.ok) {
 			const error = await response.clone().text()
-			const data = await response.json()
+			let data = null
+			try {
+				data = await response.json()
+			} catch(e) {}
 			throw {
 				$success: false,
 				$message: response.statusText,
@@ -158,7 +161,7 @@ export class F9 {
 				$name: this.#name,
 				$url: this.#url,
 				$opts: this.#opts,
-				$data: <T>data || null,
+				$data: data ? <T>data : null,
 			}
 		}
 		const data = await response[this.#responseType]()
