@@ -135,11 +135,15 @@ export class F9 {
 	 * @returns body:string | params
 	 */
 	#buildBody(params: CallParams, responseType: ResponseType) {
-		const body: Body = Object.assign({}, params)
-		delete body.headers
-		delete body.options
-		delete body.$method
-		delete body.$path
+		const body: Body = params.body || Object.assign({}, params)
+
+		if (!params.body) {
+			delete body.headers
+			delete body.options
+			delete body.$method
+			delete body.$path
+		}
+
 		if (responseType === 'json') {
 			return JSON.stringify(body)
 		}
@@ -276,7 +280,7 @@ export class F9 {
 		}
 	}
 
-	setHeaders(headers:Headers = {}) {
+	setHeaders(headers: Headers = {}) {
 		this.#headers = this.#buildHeaders(headers)
 	}
 
