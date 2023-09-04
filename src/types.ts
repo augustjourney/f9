@@ -26,7 +26,8 @@ export interface Params extends Record<string, unknown> {
 	options?: {
 		mode?: RequestMode
 		responseType?: ResponseType
-	}
+	},
+	body?: Body
 }
 
 export interface CallParams extends Params {
