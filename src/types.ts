@@ -1,4 +1,4 @@
-export interface ErrorListeners extends Record<number, Function> {}
+export interface StatusListeners extends Record<number, Function> {}
 
 export type Auth = BearerAuth | BasicAuth
 
@@ -42,23 +42,35 @@ export interface FetchOptions {
 	body?: any
 }
 
-export interface F9Error<T> {
-	$success: false
-	$message: string
-	$name: string
-	$status: number
-	$url: string
-	$opts: FetchOptions
-	$data: null | T
+export interface F9Metadata {
+	processingTime: number;
+	url: string;
+	method: Method;
+	opts: FetchOptions;
+	requestName: string;
+	responseType: ResponseType;
 }
 
-export interface F9Response<T> {
+export interface F9Error<T = void> {
+	$success: false;
+	$status: number;
+	$details: string;
+	$message: string;
+	$metadata: F9Metadata
+	$data: T | null
+}
+
+export interface F9Response<T = void> {
 	$success: true;
 	$status: number;
 	$message: string;
+	$metadata: F9Metadata
 	$data: T
 }
+
+export type F9Result<T = void> = F9Response<T> | F9Error<T>
 export type Headers = Record<string, string>
 export type Method = 'get' | 'post' | 'delete' | 'put'
 export type ResponseType = 'blob' | 'text' | 'arrayBuffer' | 'json' | 'formData'
 export type Body = Record<string, unknown>
+

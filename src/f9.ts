@@ -1,23 +1,19 @@
-import type { ErrorListeners, F9Response, Params, CallParams, Headers, ResponseType, F9Error, Method, FetchOptions, Options, Body, Auth } from './types'
+import type { StatusListeners, F9Response, Params, CallParams, Headers, ResponseType, F9Error, Method, FetchOptions, Options, Body, Auth, F9Metadata, F9Result } from './types'
 
 export class F9 {
 	#headers: Headers = {
 		'Content-Type': 'application/json',
 	}
 	#responseType: ResponseType = 'json'
-	#url = ''
-	#name = ''
-	#opts!: FetchOptions
 	#basePath = ''
-	#method: Method = 'get'
 	#auth?: Auth
-	#errorListeners: ErrorListeners
+	#statusListeners: StatusListeners
 	constructor(options?: Options) {
 		this.#basePath = options?.basePath ?? ''
 		if (options?.auth) {
 			this.#auth = options.auth
 		}
-		this.#errorListeners = {}
+		this.#statusListeners = {}
 		this.#buildAuth()
 	}
 
@@ -74,13 +70,11 @@ export class F9 {
 	 */
 	#buildFullPath(path: string) {
 		if (path.startsWith('http')) {
-			this.#url = path
+			return path
 		} else if (path.startsWith('/')) {
-			this.#url = this.#basePath + path
-		} else {
-			this.#url = this.#basePath + '/' + path
+			return this.#basePath + path
 		}
-		return this.#url
+		return this.#basePath + '/' + path
 	}
 
 	/**
@@ -109,21 +103,18 @@ export class F9 {
 		const isNotDefault = responseType !== this.#responseType
 		// If responseType exists and was set manually
 		if (responseType && isNotDefault) {
-			this.#responseType = responseType
-			return this.#responseType
+			return responseType
 		}
 		// Was not set manually
 		// Making it ouf of headers content type
 		if (contentType.includes('text')) {
-			this.#responseType = 'text'
+			return 'text'
 		} else if (contentType.includes('form')) {
-			this.#responseType = 'formData'
+			return 'formData'
 		} else if (contentType.includes('json')) {
-			this.#responseType = 'json'
-		} else {
-			this.#responseType = 'arrayBuffer'
+			return 'json'
 		}
-		return this.#responseType
+		return 'arrayBuffer'
 	}
 
 	/**
@@ -150,64 +141,61 @@ export class F9 {
 		return body
 	}
 
-	async #buildResponse<T>(response: Response): Promise<F9Response<T> | F9Error<T>> {
+	async #buildResponse<T>(response: Response, metadata:F9Metadata): Promise<F9Response<T> | F9Error<T>> {
 		if (!response.ok) {
 			const error = await response.clone().text()
 			let data = null
 			try {
 				data = await response.json()
 			} catch(e) {}
-			throw {
+			const f9Error: F9Error<T> = {
 				$success: false,
 				$message: response.statusText,
 				$details: error,
 				$status: response.status,
-				$name: this.#name,
-				$url: this.#url,
-				$opts: this.#opts,
-				$data: data ? <T>data : null,
+				$metadata: metadata,
+				$data: data ?? null
 			}
+			throw f9Error
 		}
 		const data = await response[this.#responseType]()
 		return {
 			$success: true,
 			$status: response.status,
 			$message: response.statusText,
+			$metadata: metadata,
 			$data: <T>data,
 		}
 	}
 
-	#buildError<T>(error: any | F9Error<T>): F9Error<T> {
-		let err = error
+	#buildError<T>(error: any | F9Error<T>, metadata:F9Metadata): F9Error<T> {
 		// If no $status, chances are it is a failed to fetch error
 		// Returning it with $status 0
-		if (!err?.$status) {
-			err = {
+		if (!error?.$status) {
+			const f9Error: F9Error<T> = {
 				$success: false,
 				$message: error.message,
-				$name: this.#name,
+				$details: error.message,
 				$status: 0,
-				$url: this.#url,
-				$opts: this.#opts,
+				$metadata: metadata,
 				$data: null,
-			}
+			} 
+			return f9Error
 		}
-		return <F9Error<T>>err
+		return <F9Error<T>>error
 	}
 
 	/**
 	 * A name for the request, made of method + url.
 	 * Can be used for logging info
 	 */
-	#buildName() {
-		this.#name = `${this.#method}:${this.#url}`.replace(/http:\/\/|https:\/\//gi, '')
-		return this.#name
+	#buildName(method:Method, url: string) {
+		return `${method}:${url}`.replace(/http:\/\/|https:\/\//gi, '')
 	}
 
 	async #call<T>(params: CallParams): Promise<F9Response<T> | F9Error<T>> {
+		const startTime = Date.now()
 		const { $method, $path } = params
-
-		this.#method = $method
 
 		const headers = this.#buildHeaders(params.headers)
 
@@ -218,28 +206,45 @@ export class F9 {
 		const opts: FetchOptions = {
 			method: $method,
 			headers,
-			mode: params.options?.mode,
+		}
+
+		if(params.options?.mode) {
+			opts.mode = params.options.mode
 		}
 
 		if ($method === 'post' || $method === 'put') {
 			opts.body = body
 		}
 
-		this.#opts = opts
 		const url = this.#buildFullPath($path)
-		this.#buildName()
-
+		const requestName = this.#buildName($method, url)
+		let result: F9Result<T> | null = null
 		try {
 			const response = await fetch(url, opts)
-			return await this.#buildResponse<T>(response)
+			result = await this.#buildResponse<T>(response, {
+				processingTime: Date.now() - startTime,
+				url,
+				opts,
+				method: $method,
+				requestName,
+				responseType
+			})
+			return result
 		} catch (error: any) {
 			// Build and return error
-			// Also emit error to error listeners if any
-			const err = this.#buildError<T>(error)
-			if (this.#errorListeners[err.$status]) {
-				return this.#errorListeners[err.$status](err)
+			result = this.#buildError<T>(error, {
+				processingTime: Date.now() - startTime,
+				url,
+				opts,
+				method: $method,
+				requestName,
+				responseType
+			})
+			return result
+		} finally {
+			if (result && this.#statusListeners[result?.$status]) {
+				this.#statusListeners[result?.$status](result)
 			}
-			return err
 		}
 	}
 
@@ -255,27 +260,35 @@ export class F9 {
 	 * @returns
 	 */
 	async raw<T>(url: string, opts?: FetchOptions): Promise<F9Error<T> | F9Response<T>> {
-		this.#url = url
-		if (opts) {
-			this.#opts = opts
-			this.#method = opts.method
+		const startTime = Date.now()
+		let fetchOptions: FetchOptions = opts ?? {
+			method: 'get',
+			headers: {
+				'Content-Type': 'application/json',
+			},
 		}
-		// No opts provided, building default
-		else {
-			this.#opts = {
-				method: 'get',
-				headers: {
-					'Content-Type': 'application/json',
-				},
-			}
-			this.#method = 'get'
-		}
-		this.#buildName()
+		const method:Method = opts?.method || 'get'
+		const requestName = this.#buildName(method, url)
+		const responseType = this.#buildResponseType(fetchOptions.headers['Content-Type'])
 		try {
 			const response = await fetch(url, opts)
-			return await this.#buildResponse<T>(response)
+			return await this.#buildResponse<T>(response, {
+				processingTime: Date.now() - startTime,
+				method,
+				requestName,
+				url,
+				opts: fetchOptions,
+				responseType
+			})
 		} catch (error: any) {
-			const err = this.#buildError<T>(error)
+			const err = this.#buildError<T>(error, {
+				processingTime: Date.now() - startTime,
+				method,
+				requestName,
+				url,
+				opts: fetchOptions,
+				responseType
+			})
 			return err
 		}
 	}
@@ -288,8 +301,8 @@ export class F9 {
 		this.#headers.Authorization = value
 	}
 
-	onError(status: number, fn: Function) {
-		this.#errorListeners[status] = fn
+	onStatus(status: number, fn: Function) {
+		this.#statusListeners[status] = fn
 	}
 
 	get<T>(path: string, params: Params = {}) {
