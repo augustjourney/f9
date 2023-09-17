@@ -22,20 +22,22 @@
 	],
 	"scripts": {
 		"build": "unbuild",
-		"release": "npm publish --access public"
+		"release": "npm publish --access public",
+		"test": "pnpm vitest run"
 	},
 	"keywords": [],
 	"author": "augustjourney",
 	"license": "MIT",
 	"devDependencies": {
 		"@types/node": "^20.4.3",
+		"h3": "^1.8.1",
 		"prettier": "^3.0.0",
 		"typescript": "^5.1.6",
-		"unbuild": "^1.2.1"
+		"unbuild": "^1.2.1",
+		"vitest": "^0.34.4"
 	},
 	"bugs": {
 		"url": "https://github.com/augustjourney/f9/issues"
 	},
-	"homepage": "https://github.com/augustjourney/f9#readme",
-	"dependencies": {}
+	"homepage": "https://github.com/augustjourney/f9#readme"
 }
