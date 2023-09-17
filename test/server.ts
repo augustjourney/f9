@@ -12,10 +12,15 @@ const DEFAULT_PORT = 8910
 const app = createApp()
 
 app.use('/not-found', eventHandler((event) => {
-  setResponseStatus(event, 404)
+  setResponseStatus(event, 404, 'handler not found')
   return {
     message: 'Not found'
   }
+}))
+
+app.use('/failed-request-with-text-answer', eventHandler((event) => {
+  setResponseStatus(event, 404, 'handler not found')
+  return 'Not found'
 }))
 
 app.use('/delete', eventHandler((event) => {

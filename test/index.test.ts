@@ -2,7 +2,7 @@ import { F9 } from '../src'
 import type { Auth } from '../src'
 import { createMockServer } from './server'
 import { afterAll, describe, it, expect, vi } from 'vitest'
-import type { F9Result } from '../src'
+import type { F9Response } from '../src'
 
 describe('Fetch wrapper', () => {
 	const port = 8971
@@ -42,7 +42,19 @@ describe('Fetch wrapper', () => {
 		expect(res.$data).toMatchObject(result)
 		expect(res).toHaveProperty('$metadata')
 		expect(res).toHaveProperty('$message')
-		expect(res).toHaveProperty('$details')
+	})
+
+	it('Get request with 404 and text answer', async () => {
+		const f9 = new F9({
+			basePath,
+		})
+		const res = await f9.get<{ message: string }>('/failed-request-with-text-answer')
+		const result = 'Not found'
+		expect(res.$status).toBe(404)
+		expect(res.$success).toBe(false)
+		expect(res.$data).toBe(result)
+		expect(res).toHaveProperty('$metadata')
+		expect(res).toHaveProperty('$message')
 	})
 
 	it('Delete request', async () => {
@@ -323,13 +335,13 @@ describe('Fetch wrapper', () => {
 				}
 			},
 			requestName: `get:${basePath}/not-found`.replace(/http:\/\/|https:\/\//gi, ''),
-			responseType: 'json'
+			responseType: 'json',
+			message: 'handler not found'
 		}
 		expect(res).toHaveProperty('$metadata')
 		expect(res).toHaveProperty('$status')
 		expect(res).toHaveProperty('$data')
 		expect(res).toHaveProperty('$message')
-		expect(res).toHaveProperty('$details')
 		expect(res.$metadata).toHaveProperty('processingTime')
 		expect(res.$metadata).toMatchObject(metadata)
 	})
@@ -338,13 +350,13 @@ describe('Fetch wrapper', () => {
 			basePath,
 		})
 		const statusHandlers = {
-			cb404(result:F9Result) {
+			cb404(result:F9Response) {
 				return result
 			},
-			cb500(result:F9Result) {
+			cb500(result:F9Response) {
 				return result
 			},
-			cb200(result:F9Result) {
+			cb200(result:F9Response) {
 				return result
 			},
 		}
@@ -471,7 +483,6 @@ describe('Fetch wrapper', () => {
 		expect(res).toHaveProperty('$status')
 		expect(res).toHaveProperty('$data')
 		expect(res).toHaveProperty('$message')
-		expect(res).toHaveProperty('$details')
 		expect(res.$metadata).toHaveProperty('processingTime')
 		expect(res.$metadata).toMatchObject(metadata)
 	})
