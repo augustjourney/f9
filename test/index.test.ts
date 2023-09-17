@@ -4,7 +4,7 @@ import { createMockServer } from './server'
 import { afterAll, describe, it, expect, vi } from 'vitest'
 import type { F9Result } from '../src'
 
-describe('Fetch', () => {
+describe('Fetch wrapper', () => {
 	const port = 8971
 	const server	= createMockServer(port)	
 	server.listen()
@@ -14,7 +14,7 @@ describe('Fetch', () => {
 		server.close()
 	})
 
-	it('Accepted', async () => {
+	it('Get request', async () => {
 		const f9 = new F9({
 			basePath,
 		})
@@ -29,7 +29,7 @@ describe('Fetch', () => {
 		expect(res).toHaveProperty('$metadata')
 	})
 
-	it('Not found', async () => {
+	it('Get request to receive 404', async () => {
 		const f9 = new F9({
 			basePath,
 		})
@@ -43,6 +43,21 @@ describe('Fetch', () => {
 		expect(res).toHaveProperty('$metadata')
 		expect(res).toHaveProperty('$message')
 		expect(res).toHaveProperty('$details')
+	})
+
+	it('Delete request', async () => {
+		const f9 = new F9({
+			basePath,
+		})
+		const res = await f9.delete('/delete')
+		const result = {
+			message: 'Deleted'
+		}
+		expect(res.$status).toBe(200)
+		expect(res.$success).toBe(true)
+		expect(res.$data).toMatchObject(result)
+		expect(res).toHaveProperty('$metadata')
+		expect(res).toHaveProperty('$message')
 	})
 
 	it('Default header key and auth token', async () => {

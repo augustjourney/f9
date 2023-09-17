@@ -18,6 +18,12 @@ app.use('/not-found', eventHandler((event) => {
   }
 }))
 
+app.use('/delete', eventHandler((event) => {
+  return {
+    message: 'Deleted'
+  }
+}))
+
 app.use('/auth', eventHandler((event) => {
   const query = getQuery(event)
   const tokenKey = query.token?.toString() || 'authorization'
