@@ -49,26 +49,18 @@ export interface F9Metadata {
 	opts: FetchOptions;
 	requestName: string;
 	responseType: ResponseType;
-}
-
-export interface F9Error<T = void> {
-	$success: false;
-	$status: number;
-	$details: string;
-	$message: string;
-	$metadata: F9Metadata
-	$data: T | null
+	status: number;
+	message: string;
 }
 
 export interface F9Response<T = void> {
-	$success: true;
+	$success: boolean;
 	$status: number;
 	$message: string;
 	$metadata: F9Metadata
 	$data: T
 }
 
-export type F9Result<T = void> = F9Response<T> | F9Error<T>
 export type Headers = Record<string, string>
 export type Method = 'get' | 'post' | 'delete' | 'put'
 export type ResponseType = 'blob' | 'text' | 'arrayBuffer' | 'json' | 'formData'

@@ -1,4 +1,4 @@
-import type { StatusListeners, F9Response, Params, CallParams, Headers, ResponseType, F9Error, Method, FetchOptions, Options, Body, Auth, F9Metadata, F9Result } from './types'
+import type { StatusListeners, F9Response, Params, CallParams, Headers, ResponseType, Method, FetchOptions, Options, Body, Auth, F9Metadata } from './types'
 
 export class F9 {
 	#headers: Headers = {
@@ -141,22 +141,27 @@ export class F9 {
 		return body
 	}
 
-	async #buildResponse<T>(response: Response, metadata:F9Metadata): Promise<F9Response<T> | F9Error<T>> {
+	async #buildResponse<T>(response: Response, metadata:F9Metadata): Promise<F9Response<T>> {
 		if (!response.ok) {
-			const error = await response.clone().text()
 			let data = null
+			let textData = null
+
 			try {
+				textData = await response.clone().text()
 				data = await response.json()
 			} catch(e) {}
-			const f9Error: F9Error<T> = {
+
+			if(!data && textData) {
+				data = textData
+			}
+
+			throw {
 				$success: false,
 				$message: response.statusText,
-				$details: error,
 				$status: response.status,
 				$metadata: metadata,
 				$data: data ?? null
-			}
-			throw f9Error
+			} as F9Response<T>
 		}
 		const data = await response[this.#responseType]()
 		return {
@@ -168,21 +173,24 @@ export class F9 {
 		}
 	}
 
-	#buildError<T>(error: any | F9Error<T>, metadata:F9Metadata): F9Error<T> {
+	#buildError<T>(error: any | F9Response<T>, metadata:F9Metadata): F9Response<T> {
 		// If no $status, chances are it is a failed to fetch error
 		// Returning it with $status 0
 		if (!error?.$status) {
-			const f9Error: F9Error<T> = {
+			return {
 				$success: false,
 				$message: error.message,
-				$details: error.message,
 				$status: 0,
 				$metadata: metadata,
 				$data: null,
-			} 
-			return f9Error
+			} as F9Response<T>
 		}
-		return <F9Error<T>>error
+		error.$metadata = {
+			...error.$metadata,
+			status: error.$status,
+			message: error.$message,
+		}
+		return error as F9Response<T>
 	}
 
 	/**
@@ -193,7 +201,7 @@ export class F9 {
 		return `${method}:${url}`.replace(/http:\/\/|https:\/\//gi, '')
 	}
 
-	async #call<T>(params: CallParams): Promise<F9Response<T> | F9Error<T>> {
+	async #call<T>(params: CallParams): Promise<F9Response<T>> {
 		const startTime = Date.now()
 		const { $method, $path } = params
 
@@ -218,16 +226,19 @@ export class F9 {
 
 		const url = this.#buildFullPath($path)
 		const requestName = this.#buildName($method, url)
-		let result: F9Result<T> | null = null
+		let result: F9Response<T> | null = null
+		let response: Response | null = null
 		try {
-			const response = await fetch(url, opts)
+			response = await fetch(url, opts)
 			result = await this.#buildResponse<T>(response, {
 				processingTime: Date.now() - startTime,
 				url,
 				opts,
 				method: $method,
 				requestName,
-				responseType
+				responseType,
+				status: response.status,
+				message: response.statusText
 			})
 			return result
 		} catch (error: any) {
@@ -238,7 +249,9 @@ export class F9 {
 				opts,
 				method: $method,
 				requestName,
-				responseType
+				responseType,
+				status: response?.status || 0,
+				message: response?.statusText || 'Failed to fetch'
 			})
 			return result
 		} finally {
@@ -259,7 +272,7 @@ export class F9 {
 	 * @param opts
 	 * @returns
 	 */
-	async raw<T>(url: string, opts?: FetchOptions): Promise<F9Error<T> | F9Response<T>> {
+	async raw<T>(url: string, opts?: FetchOptions): Promise<F9Response<T>> {
 		const startTime = Date.now()
 		let fetchOptions: FetchOptions = opts ?? {
 			method: 'get',
@@ -270,26 +283,30 @@ export class F9 {
 		const method:Method = opts?.method || 'get'
 		const requestName = this.#buildName(method, url)
 		const responseType = this.#buildResponseType(fetchOptions.headers['Content-Type'])
+		let response: Response | null = null
 		try {
-			const response = await fetch(url, opts)
+			response = await fetch(url, opts)
 			return await this.#buildResponse<T>(response, {
 				processingTime: Date.now() - startTime,
 				method,
 				requestName,
 				url,
 				opts: fetchOptions,
-				responseType
+				responseType,
+				status: response.status,
+				message: response.statusText
 			})
 		} catch (error: any) {
-			const err = this.#buildError<T>(error, {
+			return this.#buildError<T>(error, {
 				processingTime: Date.now() - startTime,
 				method,
 				requestName,
 				url,
 				opts: fetchOptions,
-				responseType
+				responseType,
+				status: response?.status || 0,
+				message: response?.statusText || 'Fetch failed'
 			})
-			return err
 		}
 	}
 
