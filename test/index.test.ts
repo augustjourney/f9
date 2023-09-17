@@ -74,6 +74,39 @@ describe('Fetch', () => {
 		expect(res.$data?.tokenKey).toBe(auth.header)
 	})
 
+	it('Basic auth with default header key', async () => {
+		const auth: Auth = {
+			type: 'Basic',
+			login: 'user',
+			password: 'secret'
+		}
+		const f9 = new F9({
+			basePath,
+			auth
+		})
+		const expectedToken = Buffer.from(`${auth.login}:${auth.password}`).toString('base64')
+		const res = await f9.get<{ token: string; tokenKey: string }>('/auth')
+		expect(res.$data?.token).toBe(`Basic ${expectedToken}`)
+		expect(res.$data?.tokenKey).toBe('authorization')
+	})
+
+	it('Basic auth with custom header key', async () => {
+		const auth: Auth = {
+			type: 'Basic',
+			login: 'user',
+			password: 'secret',
+			header: 'w-token'
+		}
+		const f9 = new F9({
+			basePath,
+			auth
+		})
+		const expectedToken = Buffer.from(`${auth.login}:${auth.password}`).toString('base64')
+		const res = await f9.get<{ token: string; tokenKey: string }>('/auth?token=w-token')
+		expect(res.$data?.token).toBe(`Basic ${expectedToken}`)
+		expect(res.$data?.tokenKey).toBe('w-token')
+	})
+
 	it('Post request with body', async () => {
 		const f9 = new F9({
 			basePath
