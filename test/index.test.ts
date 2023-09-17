@@ -347,6 +347,119 @@ describe('Fetch', () => {
 		expect(cb200Spy).toHaveBeenCalled()
 		expect(cb200Spy).toHaveBeenCalledTimes(1)
 	})
+
+	it('Raw fetch', async () => {
+		const f9 = new F9()
+		const res = await f9.raw(`${basePath}/`)
+		const result = {
+			ok: true
+		}
+		expect(res.$status).toBe(200)
+		expect(res.$success).toBe(true)
+		expect(res.$data).toMatchObject(result)
+		expect(res).toHaveProperty('$message')
+		expect(res).toHaveProperty('$metadata')
+	})
+
+	it('Raw fetch with post request and body', async () => {
+		const f9 = new F9()
+		const body = {
+			key: 'value',
+			key2: {
+				key3: 'value',
+				key4: [1, 2]
+			}
+		}
+		const res = await f9.raw<{ body: typeof body }>(`${basePath}/post-with-body`, { 
+			body: JSON.stringify(body), 
+			method: 'post',
+			headers: {
+				'Content-Type': 'application/json'
+			}
+		})
+		expect(res.$data?.body).toMatchObject(body)
+	})
+
+	it('Raw fetch with put request and body', async () => {
+		const f9 = new F9()
+		const body = {
+			key: 'value',
+			key2: {
+				key3: 'value',
+				key4: [1, 2]
+			}
+		}
+		const res = await f9.raw<{ body: typeof body }>(`${basePath}/put-with-body`, { 
+			body: JSON.stringify(body), 
+			method: 'put',
+			headers: {
+				'Content-Type': 'application/json'
+			}
+		})
+		expect(res.$data?.body).toMatchObject(body)
+	})
+
+	it('Raw fetch with headers in the request', async () => {
+		const f9 = new F9()
+
+		const customHeaders = {
+			'x-token': 'x-token-value',
+			'y-token': 'y-token-value'
+		}
+
+		const res = await f9.raw<{ headers: Record<string, any> }>(`${basePath}/headers`, {
+			headers: {
+				'Content-Type': 'application/json',
+				...customHeaders
+			},
+			method: 'get'
+		})
+
+		expect(res.$data?.headers).toEqual(expect.objectContaining(customHeaders))
+	})
+
+	it('Raw fetch metadata', async () => {
+		const f9 = new F9()
+		const res = await f9.raw(`${basePath}/`)
+		const metadata = {
+			method: 'get',
+			url: `${basePath}/`,
+			opts: {
+				method: 'get', 
+				headers: { 
+					'Content-Type': 'application/json' 
+				}
+			},
+			requestName: `get:${basePath}/`.replace(/http:\/\/|https:\/\//gi, ''),
+			responseType: 'json'
+		}
+		expect(res.$metadata).toHaveProperty('processingTime')
+		expect(res.$metadata).toMatchObject(metadata)
+	})
+
+	it('Raw fetch metadata in failed request', async () => {
+		const f9 = new F9()
+		const res = await f9.raw(`${basePath}/not-found`)
+		const metadata = {
+			method: 'get',
+			url: `${basePath}/not-found`,
+			opts: {
+				method: 'get', 
+				headers: { 
+					'Content-Type': 'application/json' 
+				}
+			},
+			requestName: `get:${basePath}/not-found`.replace(/http:\/\/|https:\/\//gi, ''),
+			responseType: 'json'
+		}
+		expect(res).toHaveProperty('$metadata')
+		expect(res).toHaveProperty('$status')
+		expect(res).toHaveProperty('$data')
+		expect(res).toHaveProperty('$message')
+		expect(res).toHaveProperty('$details')
+		expect(res.$metadata).toHaveProperty('processingTime')
+		expect(res.$metadata).toMatchObject(metadata)
+	})
 })
 
 describe('Failed fetch', () => {
