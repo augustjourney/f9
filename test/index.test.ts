@@ -207,6 +207,60 @@ describe('Fetch wrapper', () => {
 			'credentials': 'include'
 		})
 	})
+	
+	it('Add credentials to request globally', async () => {
+		const f9 = new F9({
+			basePath,
+			credentials: "include"
+		})
+		
+		const res = await f9.get<{ ok: boolean }>('/')
+		
+		expect(res.$metadata.opts).toMatchObject({
+			'credentials': 'include'
+		})
+	})
+	
+	it('Add credentials to request globally but omit in one request', async () => {
+		const f9 = new F9({
+			basePath,
+			credentials: "include"
+		})
+		
+		const res = await f9.get<{ ok: boolean }>('/')
+		
+		expect(res.$metadata.opts).toMatchObject({
+			'credentials': 'include'
+		})
+		
+		const res2 = await f9.get<{ ok: boolean }>('/', {
+			credentials: "omit"
+		})
+		
+		expect(res2.$metadata.opts).toMatchObject({
+			'credentials': 'omit'
+		})
+		
+		const res3 = await f9.get<{ ok: boolean }>('/')
+		
+		expect(res3.$metadata.opts).toMatchObject({
+			'credentials': 'include'
+		})
+	})
+	
+	it('Add credentials with setCredentials method', async () => {
+		const f9 = new F9({
+			basePath
+		})
+		
+		f9.setCredentials("include")
+		
+		const res = await f9.get<{ ok: boolean }>('/')
+		
+		expect(res.$metadata.opts).toMatchObject({
+			'credentials': 'include'
+		})
+	})
 
 	it('Add headers to request', async () => {
 		const f9 = new F9({
