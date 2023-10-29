@@ -64,5 +64,5 @@ export interface F9Response<T = void> {
 export type Headers = Record<string, string>
 export type Method = 'get' | 'post' | 'delete' | 'put'
 export type ResponseType = 'blob' | 'text' | 'arrayBuffer' | 'json' | 'formData'
-export type Body = Record<string, unknown>
+export type Body = any
 
