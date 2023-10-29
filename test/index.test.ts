@@ -194,6 +194,20 @@ describe('Fetch wrapper', () => {
 		expect(res.$data?.body).toMatchObject(body)
 	})
 
+	it('Add credentials to request', async () => {
+		const f9 = new F9({
+			basePath
+		})
+		
+		const res = await f9.get<{ ok: boolean }>('/', {
+			credentials: "include"
+		})
+
+		expect(res.$metadata.opts).toMatchObject({
+			'credentials': 'include'
+		})
+	})
+
 	it('Add headers to request', async () => {
 		const f9 = new F9({
 			basePath
