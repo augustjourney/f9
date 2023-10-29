@@ -22,7 +22,8 @@ export interface Options {
 }
 
 export interface Params extends Record<string, unknown> {
-	headers?: Headers
+	headers?: Record<string, string>,
+	credentials?: Credentials,
 	options?: {
 		mode?: RequestMode
 		responseType?: ResponseType
@@ -37,8 +38,9 @@ export interface CallParams extends Params {
 
 export interface FetchOptions {
 	method: Method
-	headers: Headers
+	headers: Record<string, string>
 	mode?: RequestMode
+	credentials?: Credentials
 	body?: any
 }
 
@@ -51,6 +53,7 @@ export interface F9Metadata {
 	responseType: ResponseType;
 	status: number;
 	message: string;
+	headers?: Record<string, string>
 }
 
 export interface F9Response<T = void> {
@@ -61,8 +64,7 @@ export interface F9Response<T = void> {
 	$data: T
 }
 
-export type Headers = Record<string, string>
 export type Method = 'get' | 'post' | 'delete' | 'put'
 export type ResponseType = 'blob' | 'text' | 'arrayBuffer' | 'json' | 'formData'
-export type Body = Record<string, unknown>
-
+export type Body = any
+export type Credentials = 'include' | 'same-origin' | 'omit'
