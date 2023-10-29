@@ -1,4 +1,4 @@
-import type { StatusListeners, F9Response, Params, CallParams, ResponseType, Method, FetchOptions, Options, Body, Auth, F9Metadata } from './types'
+import type { StatusListeners, Credentials, F9Response, Params, CallParams, ResponseType, Method, FetchOptions, Options, Body, Auth, F9Metadata } from './types'
 
 export class F9 {
 	#headers: Record<string, string> = {
@@ -8,10 +8,14 @@ export class F9 {
 	#basePath = ''
 	#auth?: Auth
 	#statusListeners: StatusListeners
+	#credentials?: Credentials
 	constructor(options?: Options) {
 		this.#basePath = options?.basePath ?? ''
 		if (options?.auth) {
 			this.#auth = options.auth
+		}
+		if(options?.credentials) {
+			this.#credentials = options.credentials
 		}
 		this.#statusListeners = {}
 		this.#buildAuth()
@@ -220,6 +224,10 @@ export class F9 {
 			method: $method,
 			headers,
 		}
+		
+		if(this.#credentials) {
+			opts.credentials = this.#credentials
+		}
 
 		if(params.credentials) {
 			opts.credentials = params.credentials
@@ -321,6 +329,10 @@ export class F9 {
 
 	setHeaders(headers: Record<string, string> = {}) {
 		this.#headers = this.#buildHeaders(headers)
+	}
+	
+	setCredentials(credentials: Credentials) {
+		this.#credentials = credentials
 	}
 
 	setAuthorization(value: string) {
