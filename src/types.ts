@@ -19,6 +19,7 @@ export interface BasicAuth {
 export interface Options {
 	basePath?: string
 	auth?: Auth
+	credentials?: Credentials
 }
 
 export interface Params extends Record<string, unknown> {
