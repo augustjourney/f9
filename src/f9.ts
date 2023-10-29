@@ -1,7 +1,7 @@
-import type { StatusListeners, F9Response, Params, CallParams, Headers, ResponseType, Method, FetchOptions, Options, Body, Auth, F9Metadata } from './types'
+import type { StatusListeners, F9Response, Params, CallParams, ResponseType, Method, FetchOptions, Options, Body, Auth, F9Metadata } from './types'
 
 export class F9 {
-	#headers: Headers = {
+	#headers: Record<string, string> = {
 		'Content-Type': 'application/json',
 	}
 	#responseType: ResponseType = 'json'
@@ -82,7 +82,7 @@ export class F9 {
 	 * @param headers
 	 * @returns Headers
 	 */
-	#buildHeaders(headers: Headers = {}): Headers {
+	#buildHeaders(headers: Record<string, string> = {}): Record<string, string> {
 		return {
 			...this.#headers,
 			...headers,
@@ -164,6 +164,11 @@ export class F9 {
 			} as F9Response<T>
 		}
 		const data = await response[this.#responseType]()
+		metadata.headers = {}
+		// @ts-expect-error
+		for(const [name, value] of response.headers) {
+			metadata.headers[name] = value
+		}
 		return {
 			$success: true,
 			$status: response.status,
@@ -214,6 +219,10 @@ export class F9 {
 		const opts: FetchOptions = {
 			method: $method,
 			headers,
+		}
+
+		if(params.credentials) {
+			opts.credentials = params.credentials
 		}
 
 		if(params.options?.mode) {
@@ -310,7 +319,7 @@ export class F9 {
 		}
 	}
 
-	setHeaders(headers: Headers = {}) {
+	setHeaders(headers: Record<string, string> = {}) {
 		this.#headers = this.#buildHeaders(headers)
 	}
 
