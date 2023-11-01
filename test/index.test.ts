@@ -44,6 +44,18 @@ describe('Fetch wrapper', () => {
 		expect(res).toHaveProperty('$message')
 	})
 
+	it('Get request to receive 204', async () => {
+		const f9 = new F9({
+			basePath,
+		})
+		const res = await f9.get('/204')
+		expect(res.$status).toBe(204)
+		expect(res.$success).toBe(true)
+		expect(res.$data).toBeNull()
+		expect(res).toHaveProperty('$metadata')
+
+	})
+
 	it('Get request with 404 and text answer', async () => {
 		const f9 = new F9({
 			basePath,
