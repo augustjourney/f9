@@ -153,7 +153,9 @@ export class F9 {
 			try {
 				textData = await response.clone().text()
 				data = await response.json()
-			} catch(e) {}
+			} catch(e) {
+
+			}
 
 			if(!data && textData) {
 				data = textData
@@ -167,7 +169,10 @@ export class F9 {
 				$data: data ?? null
 			} as F9Response<T>
 		}
-		const data = await response[this.#responseType]()
+		let data = null
+		try {
+			data = await response[this.#responseType]()
+		} catch(e) {}
 		metadata.headers = {}
 		// @ts-expect-error
 		for(const [name, value] of response.headers) {
