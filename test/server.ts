@@ -18,6 +18,11 @@ app.use('/not-found', eventHandler((event) => {
   }
 }))
 
+app.use('/204', eventHandler((event) => {
+  setResponseStatus(event, 204, 'handler no content')
+  return
+}))
+
 app.use('/failed-request-with-text-answer', eventHandler((event) => {
   setResponseStatus(event, 404, 'handler not found')
   return 'Not found'
