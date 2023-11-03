@@ -171,7 +171,7 @@ export class F9 {
 		}
 		let data = null
 		try {
-			data = await response[this.#responseType]()
+			data = await response[metadata.responseType]()
 		} catch(e) {}
 		metadata.headers = {}
 		// @ts-expect-error
