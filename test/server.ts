@@ -1,5 +1,5 @@
 import { createServer } from 'node:http'
-import { createApp, eventHandler, toNodeListener, setResponseStatus, getRequestHeaders, getQuery, readBody } from 'h3'
+import { createApp, eventHandler, toNodeListener, setResponseStatus, getRequestHeaders, getQuery, readBody, setResponseHeader } from 'h3'
 import type { Server } from 'node:http'
 
 export interface MockServer {
@@ -16,6 +16,11 @@ app.use('/not-found', eventHandler((event) => {
   return {
     message: 'Not found'
   }
+}))
+
+app.use('/plain-text', eventHandler((event) => {
+  setResponseHeader(event, 'Content-Type', 'text/plain')
+  return 'textplain'
 }))
 
 app.use('/204', eventHandler((event) => {
