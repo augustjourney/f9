@@ -56,6 +56,18 @@ describe('Fetch wrapper', () => {
 
 	})
 
+	it('Get plain text response', async () => {
+		const f9 = new F9({
+			basePath,
+		})
+		const res = await f9.get('/plain-text', { options: { responseType: 'text'}})
+		expect(res.$status).toBe(200)
+		expect(res.$success).toBe(true)
+		expect(res.$data).toBe('textplain')
+		expect(res).toHaveProperty('$metadata')
+
+	})
+
 	it('Get request with 404 and text answer', async () => {
 		const f9 = new F9({
 			basePath,
