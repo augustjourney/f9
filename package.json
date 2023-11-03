@@ -1,6 +1,6 @@
 {
 	"name": "@augustjourney/f9",
-	"version": "1.0.7",
+	"version": "1.0.8",
 	"description": "Simple fetch wrapper",
 	"repository": {
 		"type": "git",
