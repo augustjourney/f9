@@ -68,6 +68,25 @@ describe('Fetch wrapper', () => {
 
 	})
 
+	it('Different request and response content types', async () => {
+		const f9 = new F9({
+			basePath
+		})
+		const res = await f9.post<{ requestContentType: string; responseContentType: string }>('/content-type', { 
+			options: { responseType: 'json' },
+			headers: {
+				"Content-Type": "application/x-www-form-urlencoded",
+			},
+			body: 'key=value'
+		})
+		console.log(res)
+		expect(res.$data?.requestContentType).toBe('application/x-www-form-urlencoded')
+		expect(res.$data?.responseContentType).toBe('application/json')
+		expect(res.$status).toBe(200)
+		expect(res.$success).toBe(true)
+		expect(res).toHaveProperty('$metadata')
+	})
+
 	it('Get request with 404 and text answer', async () => {
 		const f9 = new F9({
 			basePath,

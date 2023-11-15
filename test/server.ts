@@ -1,5 +1,5 @@
 import { createServer } from 'node:http'
-import { createApp, eventHandler, toNodeListener, setResponseStatus, getRequestHeaders, getQuery, readBody, setResponseHeader } from 'h3'
+import { createApp, eventHandler, toNodeListener, setResponseStatus, getRequestHeaders, getQuery, readBody, setResponseHeader, getHeader } from 'h3'
 import type { Server } from 'node:http'
 
 export interface MockServer {
@@ -21,6 +21,16 @@ app.use('/not-found', eventHandler((event) => {
 app.use('/plain-text', eventHandler((event) => {
   setResponseHeader(event, 'Content-Type', 'text/plain')
   return 'textplain'
+}))
+
+app.use('/content-type', eventHandler((event) => {
+  const contentType = getHeader(event, 'Content-Type')
+  setResponseHeader(event, 'Content-Type', 'application/json')
+  return {
+    requestContentType: contentType,
+    responseContentType: 'application/json',
+    ok: true
+  }
 }))
 
 app.use('/204', eventHandler((event) => {
