@@ -1,8 +1,8 @@
-import { F9 } from '../src'
-import type { Auth } from '../src'
+import { F9 } from '../dist'
+import type { Auth } from '../dist'
 import { createMockServer } from './server'
 import { afterAll, describe, it, expect, vi } from 'vitest'
-import type { F9Response } from '../src'
+import type { F9Response } from '../dist'
 
 describe('Fetch wrapper', () => {
 	const port = 8971
