@@ -4,7 +4,6 @@ export class F9 {
 	#headers: Record<string, string> = {
 		'Content-Type': 'application/json',
 	}
-	#responseType: ResponseType = 'json'
 	#basePath = ''
 	#auth?: Auth
 	#statusListeners: StatusListeners
@@ -104,9 +103,8 @@ export class F9 {
 	 * @returns
 	 */
 	#buildResponseType(contentType: string, responseType?: ResponseType): ResponseType {
-		const isNotDefault = responseType !== this.#responseType
 		// If responseType exists and was set manually
-		if (responseType && isNotDefault) {
+		if (responseType) {
 			return responseType
 		}
 		// Was not set manually
