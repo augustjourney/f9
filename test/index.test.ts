@@ -1,8 +1,8 @@
-import { F9 } from '../dist'
-import type { Auth } from '../dist'
+import { F9 } from '../src'
+import type { Auth } from '../src'
 import { createMockServer } from './server'
 import { afterAll, describe, it, expect, vi } from 'vitest'
-import type { F9Response } from '../dist'
+import type { F9Response } from '../src'
 
 describe('Fetch wrapper', () => {
 	const port = 8971
@@ -72,16 +72,17 @@ describe('Fetch wrapper', () => {
 		const f9 = new F9({
 			basePath
 		})
+		const body = 'key=value'
 		const res = await f9.post<{ requestContentType: string; responseContentType: string }>('/content-type', { 
 			options: { responseType: 'json' },
 			headers: {
 				"Content-Type": "application/x-www-form-urlencoded",
 			},
-			body: 'key=value'
+			body
 		})
-		console.log(res)
 		expect(res.$data?.requestContentType).toBe('application/x-www-form-urlencoded')
 		expect(res.$data?.responseContentType).toBe('application/json')
+		expect(res.$metadata.opts.body).toBe(body)
 		expect(res.$status).toBe(200)
 		expect(res.$success).toBe(true)
 		expect(res).toHaveProperty('$metadata')

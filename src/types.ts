@@ -67,5 +67,6 @@ export interface F9Response<T = void> {
 
 export type Method = 'get' | 'post' | 'delete' | 'put'
 export type ResponseType = 'blob' | 'text' | 'arrayBuffer' | 'json' | 'formData'
+export type RequestType = ResponseType
 export type Body = any
 export type Credentials = 'include' | 'same-origin' | 'omit'

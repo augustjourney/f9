@@ -1,4 +1,4 @@
-import type { StatusListeners, Credentials, F9Response, Params, CallParams, ResponseType, Method, FetchOptions, Options, Body, Auth, F9Metadata } from './types'
+import type { StatusListeners, Credentials, F9Response, Params, CallParams, ResponseType, RequestType, Method, FetchOptions, Options, Body, Auth, F9Metadata } from './types'
 
 export class F9 {
 	#headers: Record<string, string> = {
@@ -102,11 +102,7 @@ export class F9 {
 	 * @param responseType
 	 * @returns
 	 */
-	#buildResponseType(contentType: string, responseType?: ResponseType): ResponseType {
-		// If responseType exists and was set manually
-		if (responseType) {
-			return responseType
-		}
+	#buildRequestType(contentType: string): ResponseType {
 		// Was not set manually
 		// Making it ouf of headers content type
 		if (contentType.includes('text')) {
@@ -127,7 +123,7 @@ export class F9 {
 	 * @param responseType
 	 * @returns body:string | params
 	 */
-	#buildBody(params: CallParams, responseType: ResponseType) {
+	#buildBody(params: CallParams, requestType: RequestType) {
 		const body: Body = params.body || Object.assign({}, params)
 
 		if (!params.body) {
@@ -137,7 +133,7 @@ export class F9 {
 			delete body.$path
 		}
 
-		if (responseType === 'json') {
+		if (requestType === 'json') {
 			return JSON.stringify(body)
 		}
 		return body
@@ -219,9 +215,11 @@ export class F9 {
 
 		const headers = this.#buildHeaders(params.headers)
 
-		const responseType = this.#buildResponseType(headers['Content-Type'], params.options?.responseType)
+		const requestType = this.#buildRequestType(headers['Content-Type'])
 
-		const body = this.#buildBody(params, responseType)
+		let responseType = params.options?.responseType || 'json'
+
+		const body = this.#buildBody(params, requestType)
 
 		const opts: FetchOptions = {
 			method: $method,
@@ -302,7 +300,8 @@ export class F9 {
 		}
 		const method:Method = opts?.method || 'get'
 		const requestName = this.#buildName(method, url)
-		const responseType = this.#buildResponseType(fetchOptions.headers['Content-Type'])
+		const requestType = this.#buildRequestType(fetchOptions.headers['Content-Type'])
+		let responseType: ResponseType = 'json'
 		let response: Response | null = null
 		try {
 			response = await fetch(url, opts)
