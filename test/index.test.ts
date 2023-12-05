@@ -462,14 +462,15 @@ describe('Fetch wrapper', () => {
 			basePath,
 		})
 		const statusHandlers = {
-			cb404(result:F9Response) {
-				return result
-			},
+			cb404(result:F9Response) {},
 			cb500(result:F9Response) {
 				return result
 			},
 			cb200(result:F9Response) {
-				return result
+				return {
+					...result,
+					200: true
+				}
 			},
 		}
 		const cb404Spy = vi.spyOn(statusHandlers, 'cb404')
@@ -479,12 +480,13 @@ describe('Fetch wrapper', () => {
 		f9.onStatus(500, statusHandlers.cb500)
 		f9.onStatus(200, statusHandlers.cb200)
 		await f9.get('/not-found')
-		await f9.get('/')
+		const res200 = await f9.get('/')
 		expect(cb404Spy).toHaveBeenCalled()
 		expect(cb404Spy).toHaveBeenCalledTimes(1)
 		expect(cb500Spy).not.toHaveBeenCalled()
 		expect(cb200Spy).toHaveBeenCalled()
 		expect(cb200Spy).toHaveBeenCalledTimes(1)
+		expect(res200).toHaveProperty('200')
 	})
 
 	it('Raw fetch', async () => {

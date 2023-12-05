@@ -258,6 +258,12 @@ export class F9 {
 				status: response.status,
 				message: response.statusText
 			})
+			if (result && this.#statusListeners[result?.$status]) {
+				const onStatusResponse = await this.#statusListeners[result?.$status](result)
+				if(onStatusResponse) {
+					return onStatusResponse
+				}
+			}
 			return result
 		} catch (error: any) {
 			// Build and return error
@@ -271,11 +277,13 @@ export class F9 {
 				status: response?.status || 0,
 				message: response?.statusText || 'Failed to fetch'
 			})
-			return result
-		} finally {
 			if (result && this.#statusListeners[result?.$status]) {
-				this.#statusListeners[result?.$status](result)
+				const onStatusResponse = await this.#statusListeners[result?.$status](result)
+				if(onStatusResponse) {
+					return onStatusResponse
+				}
 			}
+			return result
 		}
 	}
 
