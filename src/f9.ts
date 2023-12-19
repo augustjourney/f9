@@ -8,6 +8,8 @@ export class F9 {
 	#auth?: Auth
 	#statusListeners: StatusListeners
 	#credentials?: Credentials
+	#onRequest?: Function
+	#onResponse?: Function
 	constructor(options?: Options) {
 		this.#basePath = options?.basePath ?? ''
 		if (options?.auth) {
@@ -15,6 +17,12 @@ export class F9 {
 		}
 		if(options?.credentials) {
 			this.#credentials = options.credentials
+		}
+		if(options?.onRequest) {
+			this.#onRequest = options.onRequest
+		}
+		if(options?.onResponse) {
+			this.#onResponse = options.onResponse
 		}
 		this.#statusListeners = {}
 		this.#buildAuth()
@@ -247,6 +255,30 @@ export class F9 {
 		let result: F9Response<T> | null = null
 		let response: Response | null = null
 		try {
+			// First check for local onRequest interceptor
+			if(params.onRequest && typeof params.onRequest === 'function') {
+				params.onRequest({
+					$metadata: <F9Metadata>{
+						url,
+						opts,
+						method: $method,
+						requestName,
+						responseType,
+					}
+				})
+			}
+			// Then check for global one
+			else if(this.#onRequest  && typeof this.#onRequest === 'function') {
+				this.#onRequest({
+					$metadata: <F9Metadata>{
+						url,
+						opts,
+						method: $method,
+						requestName,
+						responseType,
+					}
+				})
+			}
 			response = await fetch(url, opts)
 			result = await this.#buildResponse<T>(response, {
 				processingTime: Date.now() - startTime,
@@ -258,10 +290,17 @@ export class F9 {
 				status: response.status,
 				message: response.statusText
 			})
-			if (result && this.#statusListeners[result?.$status]) {
-				const onStatusResponse = await this.#statusListeners[result?.$status](result)
-				if(onStatusResponse) {
-					return onStatusResponse
+			if (result) {
+
+				if(this.#statusListeners['*'] != null) {
+					await this.#statusListeners['*'](result)
+				}
+				
+				if(this.#statusListeners[result?.$status]) {
+					const onStatusResponse = await this.#statusListeners[result?.$status](result)
+					if(onStatusResponse) {
+						return onStatusResponse
+					}
 				}
 			}
 			return result
@@ -277,13 +316,27 @@ export class F9 {
 				status: response?.status || 0,
 				message: response?.statusText || 'Failed to fetch'
 			})
-			if (result && this.#statusListeners[result?.$status]) {
-				const onStatusResponse = await this.#statusListeners[result?.$status](result)
-				if(onStatusResponse) {
-					return onStatusResponse
+			if (result) {
+
+				if(this.#statusListeners['*']) {
+					await this.#statusListeners['*'](result)
+				}
+				
+				if(this.#statusListeners[result?.$status]) {
+					const onStatusResponse = await this.#statusListeners[result?.$status](result)
+					if(onStatusResponse) {
+						return onStatusResponse
+					}
 				}
 			}
 			return result
+		} finally {
+			if(params.onResponse && typeof params.onResponse === 'function') {
+				params.onResponse(result)
+			}
+			else if(this.#onResponse && typeof this.#onResponse === 'function') {
+				this.#onResponse(result)
+			}
 		}
 	}
 
@@ -349,8 +402,20 @@ export class F9 {
 		this.#headers.Authorization = value
 	}
 
-	onStatus(status: number, fn: Function) {
+	onRequest(fn: Function) {
+		this.#onRequest = fn
+	}
+
+	onResponse(fn: Function) {
+		this.#onResponse = fn
+	}
+
+	onStatus(status: number | '*', fn: Function) {
 		this.#statusListeners[status] = fn
+	}
+
+	getStatusListeners() {
+		return this.#statusListeners
 	}
 
 	get<T>(path: string, params: Params = {}) {

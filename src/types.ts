@@ -1,4 +1,4 @@
-export interface StatusListeners extends Record<number, Function> {}
+export interface StatusListeners extends Record<string, Function> {}
 
 export type Auth = BearerAuth | BasicAuth
 
@@ -20,16 +20,20 @@ export interface Options {
 	basePath?: string
 	auth?: Auth
 	credentials?: Credentials
+	onRequest?: Function;
+	onResponse?: Function;
 }
 
 export interface Params extends Record<string, unknown> {
-	headers?: Record<string, string>,
-	credentials?: Credentials,
+	headers?: Record<string, string>;
+	credentials?: Credentials;
 	options?: {
 		mode?: RequestMode
 		responseType?: ResponseType
-	},
-	body?: Body
+	};
+	body?: Body;
+	onRequest?: Function;
+	onResponse?: Function;
 }
 
 export interface CallParams extends Params {
