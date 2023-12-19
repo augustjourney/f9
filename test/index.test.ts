@@ -1,5 +1,5 @@
 import { F9 } from '../src'
-import type { Auth } from '../src'
+import type { Auth, F9Metadata } from '../src'
 import { createMockServer } from './server'
 import { afterAll, describe, it, expect, vi } from 'vitest'
 import type { F9Response } from '../src'
@@ -487,6 +487,378 @@ describe('Fetch wrapper', () => {
 		expect(cb200Spy).toHaveBeenCalled()
 		expect(cb200Spy).toHaveBeenCalledTimes(1)
 		expect(res200).toHaveProperty('200')
+	})
+
+	it('Callback on any status', async () => {
+		const f9 = new F9({
+			basePath,
+		})
+		const statusHandlers = {
+			cbAny(result:F9Response) {},
+			cb200(result:F9Response) {
+				return {
+					...result,
+					200: true
+				}
+			},
+			cb500(result:F9Response) {
+				return {
+					...result,
+					500: true
+				}
+			}
+		}
+		const cbAnySpy = vi.spyOn(statusHandlers, 'cbAny')
+		const cb200Spy = vi.spyOn(statusHandlers, 'cb200')
+		const cb500Spy = vi.spyOn(statusHandlers, 'cb500')
+
+		f9.onStatus('*', statusHandlers.cbAny)
+		f9.onStatus(200, statusHandlers.cb200)
+		f9.onStatus(500, statusHandlers.cb500)
+
+		await f9.get('/not-found')
+		const res200 = await f9.get('/')
+
+		expect(cbAnySpy).toHaveBeenCalledTimes(2)
+		expect(cb200Spy).toHaveBeenCalledTimes(1)
+		expect(cb500Spy).not.toHaveBeenCalled()
+		expect(res200).toHaveProperty('200')
+	})
+
+	it('On request interceptor global', async () => {
+
+		let resOnRequest: F9Metadata | null = null;
+
+		const f9 = new F9({
+			basePath,
+			onRequest: (req:F9Metadata) => {
+				resOnRequest = req
+			}
+		})
+
+		const res = await f9.get('/')
+
+		expect(res).toHaveProperty('$metadata')
+		expect(res).toHaveProperty('$status')
+		expect(res).toHaveProperty('$data')
+		expect(res).toHaveProperty('$message')
+
+		expect(resOnRequest).toHaveProperty('$metadata')
+	})
+
+	it('On response interceptor global', async () => {
+
+		let resOnResponse: F9Response | null = null;
+
+		const f9 = new F9({
+			basePath,
+			onResponse: (res: F9Response) => {
+				resOnResponse = res
+			}
+		})
+
+		const res = await f9.get('/')
+
+		expect(res).toHaveProperty('$metadata')
+		expect(res).toHaveProperty('$status')
+		expect(res).toHaveProperty('$data')
+		expect(res).toHaveProperty('$message')
+
+		expect(resOnResponse).toHaveProperty('$metadata')
+		expect(resOnResponse).toHaveProperty('$status')
+		expect(resOnResponse).toHaveProperty('$data')
+		expect(resOnResponse).toHaveProperty('$message')
+	})
+
+	it('On request interceptor global via onRequest', async () => {
+		const f9 = new F9({
+			basePath,
+		})
+
+		let resOnRequest: F9Metadata | null = null;
+		
+		const callbacks = {
+			onRequest(req:F9Metadata) {
+				resOnRequest = req
+			}
+		}
+
+		const onRequestSpy = vi.spyOn(callbacks, 'onRequest')
+		f9.onRequest(callbacks.onRequest)
+
+		const res = await f9.get('/')
+
+		expect(onRequestSpy).toHaveBeenCalledTimes(1)
+
+		expect(res).toHaveProperty('$metadata')
+		expect(res).toHaveProperty('$status')
+		expect(res).toHaveProperty('$data')
+		expect(res).toHaveProperty('$message')
+
+		expect(resOnRequest).toHaveProperty('$metadata')
+	})
+
+	it('On response interceptor global via onResponse', async () => {
+		const f9 = new F9({
+			basePath,
+		})
+		
+		let resOnResponse: F9Response | null = null;
+
+		const callbacks = {
+			onResponse(res: F9Response) {
+				resOnResponse = res
+			}
+		}
+
+		const onResponseSpy = vi.spyOn(callbacks, 'onResponse')
+		f9.onResponse(callbacks.onResponse)
+
+		const res = await f9.get('/')
+
+		expect(onResponseSpy).toHaveBeenCalledTimes(1)
+
+		expect(res).toHaveProperty('$metadata')
+		expect(res).toHaveProperty('$status')
+		expect(res).toHaveProperty('$data')
+		expect(res).toHaveProperty('$message')
+
+		expect(resOnResponse).toHaveProperty('$metadata')
+		expect(resOnResponse).toHaveProperty('$status')
+		expect(resOnResponse).toHaveProperty('$data')
+		expect(resOnResponse).toHaveProperty('$message')
+	})
+
+	it('On request interceptor local for request', async () => {
+		const f9 = new F9({
+			basePath,
+		})
+
+		let resOnRequest: F9Metadata | null = null;
+		
+		const callbacks = {
+			onRequest(req:F9Metadata) {
+				resOnRequest = req
+			}
+		}
+
+		const onRequestSpy = vi.spyOn(callbacks, 'onRequest')
+
+		const res = await f9.get('/', {
+			onRequest: callbacks.onRequest
+		})
+
+		expect(onRequestSpy).toHaveBeenCalledTimes(1)
+
+		expect(res).toHaveProperty('$metadata')
+		expect(res).toHaveProperty('$status')
+		expect(res).toHaveProperty('$data')
+		expect(res).toHaveProperty('$message')
+
+		expect(resOnRequest).toHaveProperty('$metadata')
+	})
+
+	it('On response interceptor local', async () => {
+		const f9 = new F9({
+			basePath,
+		})
+		
+		let resOnResponse: F9Response | null = null;
+
+		const callbacks = {
+			onResponse(res: F9Response) {
+				resOnResponse = res
+			}
+		}
+
+		const onResponseSpy = vi.spyOn(callbacks, 'onResponse')
+
+		const res = await f9.get('/', {
+			onResponse: callbacks.onResponse
+		})
+
+		expect(onResponseSpy).toHaveBeenCalledTimes(1)
+
+		expect(res).toHaveProperty('$metadata')
+		expect(res).toHaveProperty('$status')
+		expect(res).toHaveProperty('$data')
+		expect(res).toHaveProperty('$message')
+
+		expect(resOnResponse).toHaveProperty('$metadata')
+		expect(resOnResponse).toHaveProperty('$status')
+		expect(resOnResponse).toHaveProperty('$data')
+		expect(resOnResponse).toHaveProperty('$message')
+	})
+
+	it('On response interceptor local + global', async () => {
+		const f9 = new F9({
+			basePath,
+		})
+		
+		let resOnResponse: F9Response | null = null;
+
+		const callbacks = {
+			onResponseLocal(res: F9Response) {
+				resOnResponse = res
+			},
+			onResponseGlobal(res: F9Response) {
+				resOnResponse = res
+			}
+		}
+
+		const onResponseLocalSpy = vi.spyOn(callbacks, 'onResponseLocal')
+		const onResponseGlobalSpy = vi.spyOn(callbacks, 'onResponseGlobal')
+
+		const res = await f9.get('/', {
+			onResponse: callbacks.onResponseLocal
+		})
+
+		expect(onResponseLocalSpy).toHaveBeenCalledTimes(1)
+		expect(onResponseGlobalSpy).not.toHaveBeenCalled()
+
+		expect(res).toHaveProperty('$metadata')
+		expect(res).toHaveProperty('$status')
+		expect(res).toHaveProperty('$data')
+		expect(res).toHaveProperty('$message')
+
+		expect(resOnResponse).toHaveProperty('$metadata')
+		expect(resOnResponse).toHaveProperty('$status')
+		expect(resOnResponse).toHaveProperty('$data')
+		expect(resOnResponse).toHaveProperty('$message')
+	})
+
+	it('On request interceptor global + local', async () => {
+		const f9 = new F9({
+			basePath,
+		})
+
+		let resOnRequest: F9Metadata | null = null;
+		
+		const callbacks = {
+			onRequestLocal(req:F9Metadata) {
+				resOnRequest = req
+			},
+			onRequestGlobal(req:F9Metadata) {
+				resOnRequest = req
+			}
+		}
+
+		const onRequestLocalSpy = vi.spyOn(callbacks, 'onRequestLocal')
+		const onRequestGlobalSpy = vi.spyOn(callbacks, 'onRequestGlobal')
+
+		const res = await f9.get('/', {
+			onRequest: callbacks.onRequestLocal
+		})
+
+		expect(onRequestLocalSpy).toHaveBeenCalledTimes(1)
+		expect(onRequestGlobalSpy).not.toHaveBeenCalled()
+
+		expect(res).toHaveProperty('$metadata')
+		expect(res).toHaveProperty('$status')
+		expect(res).toHaveProperty('$data')
+		expect(res).toHaveProperty('$message')
+
+		expect(resOnRequest).toHaveProperty('$metadata')
+	})
+
+	it('On response interceptor local + global via constructor', async () => {
+		
+		let resOnResponse: F9Response | null = null;
+
+		const f9 = new F9({
+			basePath,
+			onResponse(res: F9Response) {
+				resOnResponse = res
+			}
+		})
+
+		const res = await f9.get('/')
+
+		expect(res).toHaveProperty('$metadata')
+		expect(res).toHaveProperty('$status')
+		expect(res).toHaveProperty('$data')
+		expect(res).toHaveProperty('$message')
+
+		expect(resOnResponse).toHaveProperty('$metadata')
+		expect(resOnResponse).toHaveProperty('$status')
+		expect(resOnResponse).toHaveProperty('$data')
+		expect(resOnResponse).toHaveProperty('$message')
+
+		resOnResponse = null
+
+		let resOnResponse2: string | null = null
+
+		const res2 = await f9.get('/', {
+			onResponse: () => {
+				resOnResponse2 = 'ok'
+			}
+		})
+
+		expect(res2).toHaveProperty('$metadata')
+		expect(res2).toHaveProperty('$status')
+		expect(res2).toHaveProperty('$data')
+		expect(res2).toHaveProperty('$message')
+
+		expect(resOnResponse2).toBe('ok')
+
+		const res3 = await f9.get('/')
+
+		expect(res3).toHaveProperty('$metadata')
+		expect(res3).toHaveProperty('$status')
+		expect(res3).toHaveProperty('$data')
+		expect(res3).toHaveProperty('$message')
+
+		expect(resOnResponse).toHaveProperty('$metadata')
+		expect(resOnResponse).toHaveProperty('$status')
+		expect(resOnResponse).toHaveProperty('$data')
+		expect(resOnResponse).toHaveProperty('$message')
+	})
+
+	it('On request interceptor global + local via constructor', async () => {
+
+		let resOnRequest: F9Metadata | null = null;
+
+		const f9 = new F9({
+			basePath,
+			onRequest: (req:F9Metadata) => {
+				resOnRequest = req
+			}
+		})
+
+		const res = await f9.get('/')
+
+		expect(res).toHaveProperty('$metadata')
+		expect(res).toHaveProperty('$status')
+		expect(res).toHaveProperty('$data')
+		expect(res).toHaveProperty('$message')
+
+		expect(resOnRequest).toHaveProperty('$metadata')
+
+		resOnRequest = null
+
+		let resOnRequest2: null | 'ok' = null;
+
+		const res2 = await f9.get('/', {
+			onRequest: (req:F9Metadata) => {
+				resOnRequest2 = 'ok'
+			}
+		})
+
+		expect(res2).toHaveProperty('$metadata')
+		expect(res2).toHaveProperty('$status')
+		expect(res2).toHaveProperty('$data')
+		expect(res2).toHaveProperty('$message')
+
+		expect(resOnRequest2).toBe('ok')
+
+		const res3 = await f9.get('/')
+
+		expect(res3).toHaveProperty('$metadata')
+		expect(res3).toHaveProperty('$status')
+		expect(res3).toHaveProperty('$data')
+		expect(res3).toHaveProperty('$message')
+
+		expect(resOnRequest).toHaveProperty('$metadata')
 	})
 
 	it('Raw fetch', async () => {
