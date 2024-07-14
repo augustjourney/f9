@@ -69,7 +69,7 @@ export interface F9Response<T = void> {
 	$data: T
 }
 
-export type Method = 'get' | 'post' | 'delete' | 'put'
+export type Method = 'get' | 'post' | 'delete' | 'put' | 'patch'
 export type ResponseType = 'blob' | 'text' | 'arrayBuffer' | 'json' | 'formData'
 export type RequestType = ResponseType
 export type Body = any

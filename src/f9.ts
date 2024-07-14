@@ -246,7 +246,7 @@ export class F9 {
 			opts.mode = params.options.mode
 		}
 
-		if ($method === 'post' || $method === 'put') {
+		if ($method === 'post' || $method === 'put' || $method === 'patch') {
 			opts.body = body
 		}
 
@@ -428,6 +428,10 @@ export class F9 {
 
 	put<T>(path: string, params: Params = {}) {
 		return this.#call<T>({ $path: path, $method: 'put', ...params })
+	}
+
+	patch<T>(path: string, params: Params = {}) {
+		return this.#call<T>({ $path: path, $method: 'patch', ...params })
 	}
 
 	delete<T>(path: string, params: Params = {}) {
