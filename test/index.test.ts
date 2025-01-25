@@ -972,6 +972,52 @@ describe('Fetch wrapper', () => {
 		expect(res.$metadata).toHaveProperty('processingTime')
 		expect(res.$metadata).toMatchObject(metadata)
 	})
+
+	it('FormData', async () => {
+		const f9 = new F9({
+			basePath
+		})
+
+		const form = new FormData()
+
+		form.append("key", "value")
+		form.append("type", "form")
+
+		const res = await f9.post('/form-data', {
+			body: form
+		})
+
+		expect(res).toHaveProperty('$metadata')
+		expect(res).toHaveProperty('$status')
+		expect(res).toHaveProperty('$data')
+		expect(res).toHaveProperty('$message')
+		expect(res.$success).toEqual(true)
+		expect(res.$status).toEqual(200)
+		expect(res.$data).toHaveProperty("key")
+		expect(res.$data).toHaveProperty("type")
+	})
+
+	it('FormData without body key', async () => {
+		const f9 = new F9({
+			basePath
+		})
+
+		const form = new FormData()
+
+		form.append("key", "value")
+		form.append("type", "form")
+
+		const res = await f9.post('/form-data', form)
+
+		expect(res).toHaveProperty('$metadata')
+		expect(res).toHaveProperty('$status')
+		expect(res).toHaveProperty('$data')
+		expect(res).toHaveProperty('$message')
+		expect(res.$success).toEqual(true)
+		expect(res.$status).toEqual(200)
+		expect(res.$data).toHaveProperty("key")
+		expect(res.$data).toHaveProperty("type")
+	})
 })
 
 describe('Failed fetch', () => {

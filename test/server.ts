@@ -1,5 +1,5 @@
 import { createServer } from 'node:http'
-import { createApp, eventHandler, toNodeListener, setResponseStatus, getRequestHeaders, getQuery, readBody, setResponseHeader, getHeader } from 'h3'
+import { createApp, eventHandler, toNodeListener, setResponseStatus, getRequestHeaders, getQuery, readBody, setResponseHeader, getHeader, readFormData } from 'h3'
 import type { Server } from 'node:http'
 
 export interface MockServer {
@@ -91,6 +91,18 @@ app.use('/headers', eventHandler(async (event) => {
   const headers = getRequestHeaders(event)
   return {
     headers
+  }
+}))
+
+app.use('/form-data', eventHandler(async (event) => {
+  const headers = getRequestHeaders(event)
+  const formData = await readFormData(event);
+  const key = formData.get("key");
+  const type = formData.get("type");
+  return {
+    contentType: headers['Content-Type'],
+    key,
+    type
   }
 }))
 

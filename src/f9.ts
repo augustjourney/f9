@@ -132,6 +132,11 @@ export class F9 {
 	 * @returns body:string | params
 	 */
 	#buildBody(params: CallParams, requestType: RequestType) {
+
+		if(params.body instanceof FormData) {
+			return params.body 
+		}
+
 		const body: Body = params.body || Object.assign({}, params)
 
 		if (!params.body) {
@@ -228,6 +233,10 @@ export class F9 {
 		let responseType = params.options?.responseType || 'json'
 
 		const body = this.#buildBody(params, requestType)
+
+		if (body instanceof FormData) {
+			delete headers['Content-Type']
+		}
 
 		const opts: FetchOptions = {
 			method: $method,
@@ -418,24 +427,33 @@ export class F9 {
 		return this.#statusListeners
 	}
 
-	get<T>(path: string, params: Params = {}) {
-		return this.#call<T>({ $path: path, $method: 'get', ...params })
+	#buildArgs(params: FormData | Params) {
+		if (params instanceof FormData) {
+			return {
+				body: params
+			}
+		}
+		return params
 	}
 
-	post<T>(path: string, params: Params = {}) {
-		return this.#call<T>({ $path: path, $method: 'post', ...params })
+	get<T>(path: string, params: FormData | Params = {}) {
+		return this.#call<T>({ $path: path, $method: 'get', ...this.#buildArgs(params) })
 	}
 
-	put<T>(path: string, params: Params = {}) {
-		return this.#call<T>({ $path: path, $method: 'put', ...params })
+	post<T>(path: string, params: FormData | Params = {}) {
+		return this.#call<T>({ $path: path, $method: 'post', ...this.#buildArgs(params) })
 	}
 
-	patch<T>(path: string, params: Params = {}) {
-		return this.#call<T>({ $path: path, $method: 'patch', ...params })
+	put<T>(path: string, params: FormData | Params = {}) {
+		return this.#call<T>({ $path: path, $method: 'put', ...this.#buildArgs(params) })
 	}
 
-	delete<T>(path: string, params: Params = {}) {
-		return this.#call<T>({ $path: path, $method: 'delete', ...params })
+	patch<T>(path: string, params: FormData | Params = {}) {
+		return this.#call<T>({ $path: path, $method: 'patch', ...this.#buildArgs(params) })
+	}
+
+	delete<T>(path: string, params: FormData | Params = {}) {
+		return this.#call<T>({ $path: path, $method: 'delete', ...this.#buildArgs(params) })
 	}
 }
 
