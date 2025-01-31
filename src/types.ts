@@ -39,6 +39,7 @@ export interface Params extends Record<string, unknown> {
 export interface CallParams extends Params {
 	$method: Method
 	$path: string
+	$retryCount: number;
 }
 
 export interface FetchOptions {
@@ -59,9 +60,10 @@ export interface F9Metadata {
 	status: number;
 	message: string;
 	headers?: Record<string, string>
+	retryCount: number
 }
 
-export interface F9Response<T = void> {
+export interface F9Response<T = unknown> {
 	$success: boolean;
 	$status: number;
 	$message: string;

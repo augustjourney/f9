@@ -1018,6 +1018,67 @@ describe('Fetch wrapper', () => {
 		expect(res.$data).toHaveProperty("key")
 		expect(res.$data).toHaveProperty("type")
 	})
+
+	it("retry on status", async () => {
+		const f9 = new F9({
+			basePath
+		})
+
+		const result = {
+			ok: true
+		}
+
+		f9.onStatus(200, async (resp: F9Response) => {
+			const res2 = await f9.retry(resp)
+
+			expect(res2.$status).toBe(200)
+			expect(res2.$success).toBe(true)
+			expect(res2.$data).toMatchObject(result)
+			expect(res2).toHaveProperty('$message')
+			expect(res2).toHaveProperty('$metadata')
+		})
+
+		const f9Spy = vi.spyOn(f9, 'retry')
+
+		
+
+		const res = await f9.get('/')
+		
+		expect(res.$status).toBe(200)
+		expect(res.$success).toBe(true)
+		expect(res.$data).toMatchObject(result)
+		expect(res).toHaveProperty('$message')
+		expect(res).toHaveProperty('$metadata')
+		expect(f9Spy).toHaveBeenCalledTimes(1)
+	})
+
+	it("retry with form data", async () => {
+		const f9 = new F9({
+			basePath
+		})
+
+		const f9Spy = vi.spyOn(f9, 'retry')
+
+		const form = new FormData()
+
+		form.append("key", "value")
+		form.append("type", "form")
+
+		const res = await f9.post('/form-data', form)
+
+		const res2 = await f9.retry(res)
+
+		expect(res.$success).toEqual(true)
+		expect(res.$status).toEqual(200)
+		expect(res.$data).toHaveProperty("key")
+		expect(res.$data).toHaveProperty("type")
+
+		expect(res2.$success).toEqual(true)
+		expect(res2.$status).toEqual(200)
+		expect(res2.$data).toHaveProperty("key")
+		expect(res2.$data).toHaveProperty("type")
+		expect(f9Spy).toHaveBeenCalledTimes(1)
+	})
 })
 
 describe('Failed fetch', () => {

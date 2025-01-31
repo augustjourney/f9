@@ -297,9 +297,10 @@ export class F9 {
 				requestName,
 				responseType,
 				status: response.status,
-				message: response.statusText
+				message: response.statusText,
+				retryCount: 0
 			})
-			if (result) {
+			if (result && params.$retryCount === 0) {
 
 				if(this.#statusListeners['*'] != null) {
 					await this.#statusListeners['*'](result)
@@ -323,9 +324,10 @@ export class F9 {
 				requestName,
 				responseType,
 				status: response?.status || 0,
-				message: response?.statusText || 'Failed to fetch'
+				message: response?.statusText || 'Failed to fetch',
+				retryCount: 0
 			})
-			if (result) {
+			if (result && params.$retryCount === 0) {
 
 				if(this.#statusListeners['*']) {
 					await this.#statusListeners['*'](result)
@@ -347,6 +349,17 @@ export class F9 {
 				this.#onResponse(result)
 			}
 		}
+	}
+
+	async retry(resp: F9Response): Promise<F9Response> {
+		return this.#call({
+			headers: resp.$metadata.opts.headers,
+			options: resp.$metadata.opts,
+			$method: resp.$metadata.method,
+			$path: resp.$metadata.url,
+			body: resp.$metadata.opts.body,
+			$retryCount: resp.$metadata.retryCount + 1
+		})
 	}
 
 	// Public methods
@@ -383,7 +396,8 @@ export class F9 {
 				opts: fetchOptions,
 				responseType,
 				status: response.status,
-				message: response.statusText
+				message: response.statusText,
+				retryCount: 0
 			})
 		} catch (error: any) {
 			return this.#buildError<T>(error, {
@@ -394,7 +408,8 @@ export class F9 {
 				opts: fetchOptions,
 				responseType,
 				status: response?.status || 0,
-				message: response?.statusText || 'Fetch failed'
+				message: response?.statusText || 'Fetch failed',
+				retryCount: 0
 			})
 		}
 	}
@@ -437,23 +452,23 @@ export class F9 {
 	}
 
 	get<T>(path: string, params: FormData | Params = {}) {
-		return this.#call<T>({ $path: path, $method: 'get', ...this.#buildArgs(params) })
+		return this.#call<T>({ $path: path, $method: 'get', ...this.#buildArgs(params), $retryCount: 0 })
 	}
 
 	post<T>(path: string, params: FormData | Params = {}) {
-		return this.#call<T>({ $path: path, $method: 'post', ...this.#buildArgs(params) })
+		return this.#call<T>({ $path: path, $method: 'post', ...this.#buildArgs(params), $retryCount: 0 })
 	}
 
 	put<T>(path: string, params: FormData | Params = {}) {
-		return this.#call<T>({ $path: path, $method: 'put', ...this.#buildArgs(params) })
+		return this.#call<T>({ $path: path, $method: 'put', ...this.#buildArgs(params), $retryCount: 0 })
 	}
 
 	patch<T>(path: string, params: FormData | Params = {}) {
-		return this.#call<T>({ $path: path, $method: 'patch', ...this.#buildArgs(params) })
+		return this.#call<T>({ $path: path, $method: 'patch', ...this.#buildArgs(params), $retryCount: 0 })
 	}
 
 	delete<T>(path: string, params: FormData | Params = {}) {
-		return this.#call<T>({ $path: path, $method: 'delete', ...this.#buildArgs(params) })
+		return this.#call<T>({ $path: path, $method: 'delete', ...this.#buildArgs(params), $retryCount: 0 })
 	}
 }
 
