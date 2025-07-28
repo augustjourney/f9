@@ -255,7 +255,7 @@ export class F9 {
 			opts.mode = params.options.mode
 		}
 
-		if ($method === 'post' || $method === 'put' || $method === 'patch') {
+		if ($method === 'post' || $method === 'put' || $method === 'patch' || $method === 'delete') {
 			opts.body = body
 		}
 
@@ -313,6 +313,7 @@ export class F9 {
 					}
 				}
 			}
+
 			return result
 		} catch (error: any) {
 			// Build and return error
