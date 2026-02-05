@@ -288,7 +288,7 @@ export class F9 {
 					}
 				})
 			}
-			response = await fetch(url, opts)
+			response = await fetch(url, { ...opts, method: $method.toUpperCase() })
 			result = await this.#buildResponse<T>(response, {
 				processingTime: Date.now() - startTime,
 				url,
@@ -388,7 +388,7 @@ export class F9 {
 		let responseType: ResponseType = 'json'
 		let response: Response | null = null
 		try {
-			response = await fetch(url, opts)
+			response = await fetch(url, { ...opts, method: method.toUpperCase() })
 			return await this.#buildResponse<T>(response, {
 				processingTime: Date.now() - startTime,
 				method,

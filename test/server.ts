@@ -87,6 +87,20 @@ app.use('/put-with-body', eventHandler(async (event) => {
   }
 }))
 
+app.use('/patch-with-body', eventHandler(async (event) => {
+  const { method } = event
+  const body = await readBody(event)
+  if(method !== 'PATCH') {
+    setResponseStatus(event, 405)
+    return {
+      ok: false
+    }
+  }
+  return {
+    body
+  }
+}))
+
 app.use('/headers', eventHandler(async (event) => {
   const headers = getRequestHeaders(event)
   return {

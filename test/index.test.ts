@@ -238,6 +238,23 @@ describe('Fetch wrapper', () => {
 		expect(res.$data?.body).toMatchObject(body)
 	})
 
+	it('Patch request with body', async () => {
+		const f9 = new F9({
+			basePath
+		})
+		const body = {
+			key: 'value',
+			key2: {
+				key3: 'value',
+				key4: [1, 2]
+			}
+		}
+		const res = await f9.patch<{ body: typeof body }>('/patch-with-body', body)
+		expect(res.$status).toBe(200)
+		expect(res.$success).toBe(true)
+		expect(res.$data?.body).toMatchObject(body)
+	})
+
 	it('Add credentials to request', async () => {
 		const f9 = new F9({
 			basePath
